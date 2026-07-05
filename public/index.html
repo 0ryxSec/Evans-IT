@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connor James — Offensive Security · Muscat, Oman</title>
+<meta name="description" content="Penetration testing consultancy in Muscat, Oman.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Archivo:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CONNOR JAMES — design tokens
+   Night over Muscat: deep indigo hull, copper instruments,
+   bone-white text. Astrolabe as signature.
+   ============================================================ */
+:root{
+  --ink:        #0A0E17;
+  --ink-2:      #10162A;
+  --ink-3:      #161e36;
+  --line:       rgba(237,230,216,.10);
+  --line-2:     rgba(237,230,216,.18);
+  --bone:       #EDE6D8;
+  --bone-dim:   rgba(237,230,216,.62);
+  --bone-faint: rgba(237,230,216,.38);
+  --copper:     #D08C4A;
+  --copper-hi:  #F0B76A;
+  --copper-dim: rgba(208,140,74,.35);
+  --sea:        #3E6E78;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body:    "Archivo", -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    "JetBrains Mono", "SFMono-Regular", monospace;
+
+  --w: min(1180px, calc(100% - 3rem));
+  --nav-h: 68px;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  background:var(--ink);
+  color:var(--bone);
+  font-family:var(--font-body);
+  font-weight:300;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{ background:var(--copper); color:var(--ink); }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--copper); outline-offset:3px; border-radius:2px; }
+img{ max-width:100%; }
+
+.wrap{ width:var(--w); margin-inline:auto; }
+
+/* mono eyebrow labels */
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:var(--copper);
+  display:flex; align-items:center; gap:.9rem;
+}
+.eyebrow::before{ content:""; width:2.2rem; height:1px; background:var(--copper); flex:none; }
+
+h1,h2,h3{ font-family:var(--font-display); font-weight:400; line-height:1.08; letter-spacing:-0.01em; }
+h2{ font-size:clamp(2.1rem, 4.6vw, 3.6rem); }
+.serif-i{ font-style:italic; font-weight:300; color:var(--copper-hi); }
+
+/* ============================================================
+   Scroll progress bar (pure CSS scroll timeline)
+   ============================================================ */
+.progress{
+  position:fixed; top:0; left:0; right:0; height:2px; z-index:200;
+  background:linear-gradient(90deg, var(--copper), var(--copper-hi));
+  transform-origin:0 50%; transform:scaleX(0);
+}
+@supports (animation-timeline: scroll()){
+  .progress{ animation:growX linear both; animation-timeline:scroll(root); }
+}
+@keyframes growX{ to{ transform:scaleX(1); } }
+
+/* ============================================================
+   Navigation
+   ============================================================ */
+nav{
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  height:var(--nav-h);
+  display:flex; align-items:center;
+  background:rgba(10,14,23,.72);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+nav .wrap{ display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.brand{
+  font-family:var(--font-display); font-size:1.25rem; letter-spacing:.01em;
+  text-decoration:none; display:flex; align-items:baseline; gap:.55rem;
+}
+.brand small{
+  font-family:var(--font-mono); font-size:.6rem; letter-spacing:.3em;
+  color:var(--copper); text-transform:uppercase; transform:translateY(-1px);
+}
+.nav-links{ display:flex; gap:2.2rem; list-style:none; }
+.nav-links a{
+  font-family:var(--font-mono); font-size:.72rem; letter-spacing:.18em;
+  text-transform:uppercase; text-decoration:none; color:var(--bone-dim);
+  transition:color .25s;
+}
+.nav-links a:hover{ color:var(--copper-hi); }
+.nav-cta{
+  font-family:var(--font-mono); font-size:.7rem; letter-spacing:.18em; text-transform:uppercase;
+  text-decoration:none; color:var(--ink); background:var(--copper);
+  padding:.62rem 1.1rem; border-radius:2px; transition:background .25s;
+  white-space:nowrap;
+}
+.nav-cta:hover{ background:var(--copper-hi); }
+@media (max-width: 860px){ .nav-links{ display:none; } }
+
+/* ============================================================
+   HERO — astrolabe / radar sweep
+   ============================================================ */
+.hero{
+  min-height:100svh;
+  display:grid; align-items:center;
+  padding:calc(var(--nav-h) + 4rem) 0 5rem;
+  position:relative;
+  isolation:isolate;
+}
+/* dotted chart-grid backdrop, faded at edges */
+.hero::before{
+  content:""; position:absolute; inset:0; z-index:-2;
+  background-image:radial-gradient(rgba(237,230,216,.10) 1px, transparent 1px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(ellipse 75% 70% at 60% 40%, #000 20%, transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 75% 70% at 60% 40%, #000 20%, transparent 75%);
+}
+.hero::after{
+  content:""; position:absolute; inset:0; z-index:-3;
+  background:
+    radial-gradient(60% 55% at 78% 38%, rgba(62,110,120,.16), transparent 70%),
+    radial-gradient(45% 45% at 15% 85%, rgba(208,140,74,.07), transparent 70%);
+}
+.hero-grid{
+  display:grid; grid-template-columns:1.05fr .95fr; gap:3rem; align-items:center;
+}
+.hero h1{
+  font-size:clamp(2.6rem, 5.6vw, 4.7rem);
+  margin:1.4rem 0 1.6rem;
+}
+.hero p.lede{
+  font-size:clamp(1rem, 1.4vw, 1.15rem);
+  color:var(--bone-dim);
+  max-width:34rem;
+}
+.hero-ctas{ display:flex; gap:1rem; margin-top:2.4rem; flex-wrap:wrap; }
+.btn{
+  font-family:var(--font-mono); font-size:.74rem; letter-spacing:.18em; text-transform:uppercase;
+  text-decoration:none; padding:1rem 1.6rem; border-radius:2px;
+  transition:transform .25s, background .25s, border-color .25s;
+}
+.btn:hover{ transform:translateY(-2px); }
+.btn-solid{ background:var(--copper); color:var(--ink); }
+.btn-solid:hover{ background:var(--copper-hi); }
+.btn-ghost{ border:1px solid var(--line-2); color:var(--bone); }
+.btn-ghost:hover{ border-color:var(--copper); color:var(--copper-hi); }
+
+.hero-meta{
+  display:flex; gap:2.4rem; margin-top:3.4rem; flex-wrap:wrap;
+  font-family:var(--font-mono); font-size:.68rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--bone-faint);
+}
+.hero-meta span b{ display:block; color:var(--bone); font-weight:500; margin-bottom:.15rem; }
+
+/* --- the astrolabe --- */
+.astro{
+  position:relative;
+  width:min(440px, 82vw);
+  aspect-ratio:1;
+  margin-inline:auto;
+}
+.astro .ring{
+  position:absolute; border-radius:50%;
+  border:1px solid var(--line-2);
+}
+.astro .r1{ inset:0; }
+.astro .r2{ inset:11%; border-style:dashed; opacity:.7; animation:spin 90s linear infinite; }
+.astro .r3{ inset:24%; border-color:var(--copper-dim); }
+.astro .r4{ inset:37%; opacity:.55; animation:spin 60s linear infinite reverse; border-style:dotted; }
+/* degree ticks on the outer rim */
+.astro .ticks{
+  position:absolute; inset:0; border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,
+      var(--line-2) 0deg .5deg, transparent .5deg 15deg);
+  mask:radial-gradient(circle, transparent 46.5%, #000 47%, #000 50%, transparent 50.5%);
+  -webkit-mask:radial-gradient(circle, transparent 46.5%, #000 47%, #000 50%, transparent 50.5%);
+}
+/* crosshair */
+.astro .cross-v, .astro .cross-h{ position:absolute; background:var(--line); }
+.astro .cross-v{ left:50%; top:2%; bottom:2%; width:1px; }
+.astro .cross-h{ top:50%; left:2%; right:2%; height:1px; }
+/* rotating sweep */
+.astro .sweep{
+  position:absolute; inset:1px; border-radius:50%;
+  background:conic-gradient(from 0deg,
+      transparent 0deg 300deg,
+      rgba(208,140,74,.02) 300deg,
+      rgba(208,140,74,.28) 352deg,
+      var(--copper-hi) 359deg,
+      transparent 360deg);
+  animation:spin 8s linear infinite;
+}
+.astro .hub{
+  position:absolute; left:50%; top:50%; width:9px; height:9px;
+  transform:translate(-50%,-50%); border-radius:50%;
+  background:var(--copper-hi);
+  box-shadow:0 0 18px 2px rgba(240,183,106,.55);
+}
+/* contact blips — pulse timed to the 8s sweep */
+.blip{
+  position:absolute; width:7px; height:7px; border-radius:50%;
+  background:var(--copper-hi); opacity:0;
+  animation:blip 8s infinite;
+}
+.blip::after{
+  content:attr(data-id);
+  position:absolute; left:12px; top:-4px;
+  font-family:var(--font-mono); font-size:.55rem; letter-spacing:.14em;
+  color:var(--copper); white-space:nowrap;
+}
+.b1{ left:69%; top:26%; animation-delay:.9s; }
+.b2{ left:30%; top:64%; animation-delay:4.6s; }
+.b3{ left:58%; top:71%; animation-delay:3.1s; }
+@keyframes blip{
+  0%,4%{ opacity:0; transform:scale(.4); }
+  6%{ opacity:1; transform:scale(1.5); box-shadow:0 0 0 0 rgba(240,183,106,.6); }
+  16%{ box-shadow:0 0 0 16px rgba(240,183,106,0); }
+  40%{ opacity:.85; transform:scale(1); }
+  75%,100%{ opacity:0; }
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+/* astrolabe caption */
+.astro-cap{
+  text-align:center; margin-top:1.6rem;
+  font-family:var(--font-mono); font-size:.64rem; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--bone-faint);
+}
+
+/* hero recedes as you scroll away (parallax fade) */
+@supports (animation-timeline: view()){
+  .hero-grid{
+    animation:heroExit linear both;
+    animation-timeline:view();
+    animation-range:exit 0% exit 100%;
+  }
+  @keyframes heroExit{
+    to{ opacity:.15; transform:translateY(-60px) scale(.97); }
+  }
+}
+
+/* ============================================================
+   Ticker — sectors marquee
+   ============================================================ */
+.ticker{
+  border-block:1px solid var(--line);
+  overflow:hidden; white-space:nowrap;
+  padding:1.05rem 0;
+  background:var(--ink-2);
+  position:relative; z-index:2;
+}
+.ticker-track{ display:inline-flex; gap:0; animation:marquee 36s linear infinite; }
+.ticker span{
+  font-family:var(--font-mono); font-size:.72rem; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--bone-dim);
+  padding-inline:2.2rem;
+}
+.ticker span::after{ content:"✦"; color:var(--copper); margin-left:4.4rem; font-size:.6rem; }
+@keyframes marquee{ to{ transform:translateX(-50%); } }
+.ticker:hover .ticker-track{ animation-play-state:paused; }
+
+/* ============================================================
+   Shared section rhythm + scroll reveals
+   ============================================================ */
+section{ padding:7.5rem 0; position:relative; scroll-margin-top:var(--nav-h); }
+.sec-head{ max-width:46rem; margin-bottom:4rem; }
+.sec-head h2{ margin-top:1.3rem; }
+.sec-head p{ color:var(--bone-dim); margin-top:1.2rem; max-width:38rem; }
+
+.reveal{ opacity:1; }
+@supports (animation-timeline: view()){
+  .reveal{
+    animation:rise .9s both;
+    animation-timeline:view();
+    animation-range:entry 5% entry 45%;
+  }
+}
+@keyframes rise{
+  from{ opacity:0; transform:translateY(42px); }
+  to{ opacity:1; transform:none; }
+}
+
+/* ============================================================
+   Positioning statement
+   ============================================================ */
+.statement{ border-top:1px solid var(--line); }
+.statement .big{
+  font-family:var(--font-display);
+  font-size:clamp(1.7rem, 3.4vw, 2.7rem);
+  line-height:1.35; max-width:56rem;
+}
+.statement .big em{ font-style:italic; color:var(--copper-hi); }
+.statement-grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  background:var(--line); border:1px solid var(--line);
+  margin-top:4.5rem;
+}
+.statement-grid article{ background:var(--ink); padding:2.2rem 2rem; }
+.statement-grid h3{ font-size:1.25rem; margin:.9rem 0 .7rem; }
+.statement-grid p{ font-size:.92rem; color:var(--bone-dim); }
+.glyph{
+  font-family:var(--font-mono); font-size:.68rem; letter-spacing:.2em;
+  color:var(--copper);
+}
+
+/* ============================================================
+   SERVICES — sticky stacking deck (Apple-style)
+   ============================================================ */
+.deck{ display:grid; }
+.card-wrap{
+  min-height:78vh;               /* scroll travel for the pinned card */
+  view-timeline-name:--cw;
+  view-timeline-axis:block;
+}
+.card-wrap:last-child{ min-height:0; }
+.card{
+  position:sticky;
+  top:calc(var(--nav-h) + 3.2rem);
+  background:linear-gradient(160deg, var(--ink-3), var(--ink-2) 55%);
+  border:1px solid var(--line-2);
+  border-radius:6px;
+  padding:clamp(1.8rem, 4vw, 3.4rem);
+  display:grid; grid-template-columns:1fr 1fr; gap:2.6rem;
+  min-height:20rem;
+  box-shadow:0 -18px 50px rgba(4,6,12,.55);
+}
+@supports (animation-timeline: view()){
+  /* as each wrapper scrolls past the top, its pinned card recedes
+     beneath the next one */
+  .card{
+    animation:cardBack linear both;
+    animation-timeline:--cw;
+    animation-range:exit 0% exit 100%;
+  }
+  @keyframes cardBack{
+    to{ transform:scale(.93) translateY(-18px); filter:brightness(.5) saturate(.8); }
+  }
+  .card-wrap:last-child .card{ animation:none; }
+}
+.card .idx{
+  font-family:var(--font-mono); font-size:.68rem; letter-spacing:.24em;
+  color:var(--copper); text-transform:uppercase; margin-bottom:1.4rem;
+  display:flex; justify-content:space-between; gap:1rem;
+}
+.card h3{ font-size:clamp(1.6rem, 2.6vw, 2.3rem); margin-bottom:1.1rem; }
+.card p{ color:var(--bone-dim); font-size:.97rem; max-width:32rem; }
+.card ul{
+  list-style:none; display:grid; gap:.85rem; align-content:center;
+}
+.card ul li{
+  font-size:.92rem; color:var(--bone-dim);
+  padding:.85rem 1rem;
+  border:1px solid var(--line);
+  border-left:2px solid var(--copper-dim);
+  border-radius:3px;
+  background:rgba(10,14,23,.45);
+  transition:border-color .25s, color .25s;
+}
+.card ul li:hover{ border-left-color:var(--copper-hi); color:var(--bone); }
+.card ul li b{ font-weight:500; color:var(--bone); }
+
+/* ============================================================
+   METHOD — kill chain, line draws on scroll
+   ============================================================ */
+.method{ background:var(--ink-2); border-block:1px solid var(--line); }
+.chain{ position:relative; max-width:46rem; margin-top:1rem; }
+.chain::before{
+  content:""; position:absolute; left:11px; top:8px; bottom:8px; width:1px;
+  background:var(--line-2);
+}
+.chain::after{
+  content:""; position:absolute; left:10.5px; top:8px; bottom:8px; width:2px;
+  background:linear-gradient(var(--copper-hi), var(--copper));
+  transform-origin:top; transform:scaleY(0);
+  box-shadow:0 0 12px rgba(208,140,74,.5);
+}
+@supports (animation-timeline: view()){
+  .chain::after{
+    animation:drawY linear both;
+    animation-timeline:view();
+    animation-range:entry 30% exit 85%;
+  }
+}
+@keyframes drawY{ to{ transform:scaleY(1); } }
+.step{
+  position:relative;
+  padding:0 0 3.4rem 3.4rem;
+}
+.step:last-child{ padding-bottom:0; }
+.step::before{
+  content:""; position:absolute; left:5px; top:6px;
+  width:13px; height:13px; border-radius:50%;
+  border:1px solid var(--copper); background:var(--ink-2);
+}
+@supports (animation-timeline: view()){
+  .step::before{
+    animation:node .5s both;
+    animation-timeline:view();
+    animation-range:entry 25% entry 55%;
+  }
+}
+@keyframes node{
+  from{ background:var(--ink-2); box-shadow:none; }
+  to{ background:var(--copper-hi); box-shadow:0 0 14px rgba(240,183,106,.6); }
+}
+.step .k{
+  font-family:var(--font-mono); font-size:.66rem; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--copper);
+}
+.step h3{ font-size:1.45rem; margin:.5rem 0 .55rem; }
+.step p{ color:var(--bone-dim); font-size:.95rem; max-width:34rem; }
+.method-note{
+  margin-top:4rem; padding:1.6rem 1.8rem;
+  border:1px dashed var(--copper-dim); border-radius:4px;
+  font-family:var(--font-mono); font-size:.78rem; line-height:1.9;
+  color:var(--bone-dim); max-width:46rem;
+}
+.method-note b{ color:var(--copper-hi); font-weight:500; }
+
+/* ============================================================
+   STATS — scroll-driven counters
+   ============================================================ */
+.stats-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+  background:var(--line); border:1px solid var(--line);
+}
+.stat{ background:var(--ink); padding:2.6rem 2rem; }
+.stat .n{
+  font-family:var(--font-display); font-weight:300;
+  font-size:clamp(2.6rem, 4.5vw, 3.8rem); line-height:1;
+  color:var(--copper-hi);
+}
+.stat .lbl{
+  margin-top:.9rem; font-family:var(--font-mono); font-size:.66rem;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--bone-faint);
+  line-height:1.8;
+}
+@property --num{ syntax:"<integer>"; initial-value:0; inherits:false; }
+@supports (animation-timeline: view()){
+  .stat .n .fallback{ display:none; }
+  .stat .n::before{
+    counter-reset:num var(--num);
+    content:counter(num);
+    animation:count linear both;
+    animation-timeline:view();
+    animation-range:entry 20% entry 90%;
+  }
+  @keyframes count{ from{ --num:0; } to{ --num:var(--target); } }
+}
+
+/* ============================================================
+   968SEC — partnership band
+   ============================================================ */
+.sec968{
+  background:
+    radial-gradient(70% 120% at 85% 10%, rgba(208,140,74,.14), transparent 60%),
+    var(--ink-3);
+  border-block:1px solid var(--line);
+  overflow:hidden;
+}
+.sec968 .wrap{ display:grid; grid-template-columns:1.2fr .8fr; gap:3rem; align-items:center; }
+.sec968 h2 .code{
+  font-family:var(--font-mono); font-weight:400; letter-spacing:.02em;
+  color:var(--copper-hi);
+}
+.sec968 p{ color:var(--bone-dim); max-width:34rem; margin-top:1.2rem; }
+.sec968 .formats{ display:grid; gap:1rem; }
+.fmt{
+  border:1px solid var(--line-2); border-radius:4px; padding:1.4rem 1.5rem;
+  background:rgba(10,14,23,.5);
+}
+.fmt .k{ font-family:var(--font-mono); font-size:.64rem; letter-spacing:.22em; text-transform:uppercase; color:var(--copper); }
+.fmt h3{ font-size:1.2rem; margin:.45rem 0 .35rem; }
+.fmt p{ font-size:.88rem; margin:0; }
+.link-arrow{
+  display:inline-flex; align-items:center; gap:.6rem; margin-top:2rem;
+  font-family:var(--font-mono); font-size:.74rem; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--copper-hi); text-decoration:none;
+}
+.link-arrow::after{ content:"→"; transition:transform .25s; }
+.link-arrow:hover::after{ transform:translateX(6px); }
+
+/* ============================================================
+   REACH — four markets
+   ============================================================ */
+.reach-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+  background:var(--line); border:1px solid var(--line);
+}
+.port{
+  background:var(--ink); padding:2.4rem 2rem; position:relative;
+  transition:background .3s; min-height:15rem;
+  display:flex; flex-direction:column; justify-content:space-between; gap:2rem;
+}
+.port:hover{ background:var(--ink-2); }
+.port .coords{
+  font-family:var(--font-mono); font-size:.62rem; letter-spacing:.16em;
+  color:var(--bone-faint);
+}
+.port h3{ font-size:1.5rem; margin-top:.5rem; }
+.port .tag{
+  font-family:var(--font-mono); font-size:.62rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--copper);
+}
+.port p{ font-size:.88rem; color:var(--bone-dim); }
+.port.hq::after{
+  content:"HQ"; position:absolute; top:1.3rem; right:1.3rem;
+  font-family:var(--font-mono); font-size:.6rem; letter-spacing:.2em;
+  color:var(--ink); background:var(--copper); padding:.25rem .5rem; border-radius:2px;
+}
+
+/* ============================================================
+   CTA + footer
+   ============================================================ */
+.cta{ text-align:center; padding:9rem 0; }
+.cta h2{ font-size:clamp(2.4rem, 5.4vw, 4.2rem); max-width:52rem; margin-inline:auto; }
+.cta p{ color:var(--bone-dim); margin:1.6rem auto 0; max-width:34rem; }
+.cta .hero-ctas{ justify-content:center; }
+.cta .mono-mail{
+  display:block; margin-top:2.6rem;
+  font-family:var(--font-mono); font-size:.8rem; letter-spacing:.14em;
+  color:var(--bone-faint);
+}
+.cta .mono-mail a{ color:var(--copper-hi); text-decoration:none; border-bottom:1px solid var(--copper-dim); }
+.cta .mono-mail a:hover{ border-bottom-color:var(--copper-hi); }
+
+footer{
+  border-top:1px solid var(--line);
+  padding:3rem 0 3.4rem;
+}
+footer .wrap{
+  display:flex; justify-content:space-between; align-items:center; gap:1.5rem; flex-wrap:wrap;
+}
+footer p, footer a{
+  font-family:var(--font-mono); font-size:.66rem; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--bone-faint); text-decoration:none;
+}
+footer a:hover{ color:var(--copper-hi); }
+footer .foot-links{ display:flex; gap:2rem; list-style:none; }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 980px){
+  .hero-grid{ grid-template-columns:1fr; gap:4rem; }
+  .astro{ order:-1; width:min(320px, 72vw); }
+  .card{ grid-template-columns:1fr; min-height:0; }
+  .statement-grid{ grid-template-columns:1fr; }
+  .stats-grid{ grid-template-columns:1fr 1fr; }
+  .reach-grid{ grid-template-columns:1fr 1fr; }
+  .sec968 .wrap{ grid-template-columns:1fr; }
+}
+@media (max-width: 560px){
+  section{ padding:5.5rem 0; }
+  .stats-grid{ grid-template-columns:1fr 1fr; }
+  .reach-grid{ grid-template-columns:1fr; }
+  .hero-meta{ gap:1.6rem; }
+}
+
+/* ============================================================
+   Reduced motion — everything settles, nothing moves
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+  html{ scroll-behavior:auto; }
+  .progress{ display:none; }
+  .stat .n .fallback{ display:inline; }
+  .stat .n::before{ content:none; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"></div>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">Connor James <small>LLC</small></a>
+    <ul class="nav-links">
+      <li><a href="#capabilities">Capabilities</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#reach">Reach</a></li>
+      <li><a href="#s968">968Sec</a></li>
+    </ul>
+    <a class="nav-cta" href="#contact">Request engagement</a>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Offensive security · Muscat, Oman</p>
+      <h1>We find the way in — <span class="serif-i">before anyone else does.</span></h1>
+      <p class="lede">Connor James is a penetration testing consultancy serving enterprises across Oman, the GCC and globally. Precise, adversary-grade testing. Findings your board can act on.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-solid" href="#contact">Request an engagement</a>
+        <a class="btn btn-ghost" href="#capabilities">View capabilities</a>
+      </div>
+      <div class="hero-meta">
+        <span><b>Muscat</b>Headquarters</span>
+        <span><b>4 markets</b>Oman · GCC · UK · US</span>
+        <span><b>Black Hat</b>Trainings partner</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="astro" aria-hidden="true">
+        <div class="ticks"></div>
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+        <div class="ring r4"></div>
+        <div class="cross-v"></div>
+        <div class="cross-h"></div>
+        <div class="sweep"></div>
+        <span class="blip b1" data-id="EXT-443"></span>
+        <span class="blip b2" data-id="AD-LAT"></span>
+        <span class="blip b3" data-id="API-KEY"></span>
+        <div class="hub"></div>
+      </div>
+      <p class="astro-cap">Continuous sweep · every surface charted</p>
+    </div>
+  </div>
+</header>
+
+<!-- ================= TICKER ================= -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>Banking &amp; Finance</span><span>Energy &amp; Utilities</span><span>Government</span><span>Aviation</span><span>Telecommunications</span><span>Healthcare</span><span>Logistics</span><span>Insurance</span>
+    <span>Banking &amp; Finance</span><span>Energy &amp; Utilities</span><span>Government</span><span>Aviation</span><span>Telecommunications</span><span>Healthcare</span><span>Logistics</span><span>Insurance</span>
+  </div>
+</div>
+
+<!-- ================= STATEMENT ================= -->
+<section class="statement">
+  <div class="wrap">
+    <div class="reveal">
+      <p class="eyebrow">Why we exist</p>
+      <p class="big" style="margin-top:1.6rem;">Oman's oldest trade was navigation, reading hostile waters better than anyone else. We do the same with your attack surface: <em>chart it, test it, and hand you the map.</em></p>
+    </div>
+    <div class="statement-grid">
+      <article class="reveal">
+        <span class="glyph">/ SENIOR-LED</span>
+        <h3>No junior handoffs</h3>
+        <p>Every engagement is scoped, executed and reported by senior practitioners. The consultant who breaks in is the person who briefs your leadership.</p>
+      </article>
+      <article class="reveal">
+        <span class="glyph">/ EVIDENCE-FIRST</span>
+        <h3>Findings that survive scrutiny</h3>
+        <p>Reproducible attack paths, clear business impact, and remediation your engineers can execute. Written for auditors, boards and regulators alike.</p>
+      </article>
+      <article class="reveal">
+        <span class="glyph">/ DISCREET</span>
+        <h3>Built for sensitive estates</h3>
+        <p>We operate under strict confidentiality across regulated industries - from financial institutions to critical national infrastructure.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SERVICES / DECK ================= -->
+<section id="capabilities">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">Capabilities</p>
+      <h2>Five ways we pressure-test <span class="serif-i">your defences.</span></h2>
+      <p>Scroll through the deck. Each capability stands alone or combines into a full offensive-security programme.</p>
+    </div>
+
+    <div class="deck">
+      <div class="card-wrap"><article class="card">
+        <div>
+          <p class="idx"><span>Capability 01</span><span>/ OFFENSIVE</span></p>
+          <h3>Penetration Testing</h3>
+          <p>Adversary-grade testing across your full estate — external perimeter, internal networks, web and mobile applications, and wireless. Real attack paths, demonstrated safely, documented precisely.</p>
+        </div>
+        <ul>
+          <li><b>External</b> — internet-facing perimeter &amp; exposure</li>
+          <li><b>Internal</b> — assumed-breach &amp; lateral movement</li>
+          <li><b>Web &amp; API</b> — application logic and auth flaws</li>
+          <li><b>Mobile</b> — iOS &amp; Android, client to backend</li>
+          <li><b>Wireless</b> — rogue access &amp; segmentation gaps</li>
+        </ul>
+      </article></div>
+
+      <div class="card-wrap"><article class="card">
+        <div>
+          <p class="idx"><span>Capability 02</span><span>/ ASSESS</span></p>
+          <h3>Cyber Maturity Assessment</h3>
+          <p>A structured, framework-aligned review of your security programme — people, process and technology — benchmarked against your sector and regulatory landscape, with a prioritised roadmap.</p>
+        </div>
+        <ul>
+          <li><b>Baseline</b> — where your programme stands today</li>
+          <li><b>Benchmark</b> — against peers &amp; regulatory expectations</li>
+          <li><b>Roadmap</b> — sequenced, costed, board-ready</li>
+        </ul>
+      </article></div>
+
+      <div class="card-wrap"><article class="card">
+        <div>
+          <p class="idx"><span>Capability 03</span><span>/ ADVISE</span></p>
+          <h3>Virtual CISO</h3>
+          <p>Senior security leadership on retainer. Strategy, governance, vendor scrutiny and incident readiness — without the cost of a full-time executive hire.</p>
+        </div>
+        <ul>
+          <li><b>Strategy</b> — security direction tied to business goals</li>
+          <li><b>Governance</b> — policy, risk &amp; compliance oversight</li>
+          <li><b>Readiness</b> — incident response planning &amp; drills</li>
+        </ul>
+      </article></div>
+
+      <div class="card-wrap"><article class="card">
+        <div>
+          <p class="idx"><span>Capability 04</span><span>/ TRAIN</span></p>
+          <h3>Training &amp; Certification</h3>
+          <p>Hands-on offensive and defensive training delivered by practitioners — including our partnership with Black Hat Trainings and accredited certification pathways for your teams.</p>
+        </div>
+        <ul>
+          <li><b>Black Hat</b> — Trainings partnership</li>
+          <li><b>Accredited</b> — recognised certification tracks</li>
+          <li><b>Bespoke</b> — custom courses built around your stack</li>
+        </ul>
+      </article></div>
+
+      <div class="card-wrap"><article class="card">
+        <div>
+          <p class="idx"><span>Capability 05</span><span>/ EXTEND</span></p>
+          <h3>Partner-Delivered Capabilities</h3>
+          <p>Specialist services delivered with vetted partners under our oversight — extending your programme without extending your vendor list.</p>
+        </div>
+        <ul>
+          <li><b>Threat intelligence</b> — sector-specific visibility</li>
+          <li><b>Secure on-premise AI</b> — capability without exposure</li>
+          <li><b>Cyber exercises</b> — executive &amp; technical war-gaming</li>
+          <li><b>Secure email</b> — hardened communications</li>
+        </ul>
+      </article></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= METHOD ================= -->
+<section class="method" id="method">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">Method</p>
+      <h2>The route an attacker would take — <span class="serif-i">walked first, by us.</span></h2>
+    </div>
+
+    <div class="chain">
+      <div class="step">
+        <span class="k">Phase 01</span>
+        <h3>Reconnaissance</h3>
+        <p>We map what an adversary sees: exposed services, leaked credentials, forgotten assets, and the people most likely to be targeted.</p>
+      </div>
+      <div class="step">
+        <span class="k">Phase 02</span>
+        <h3>Initial Access</h3>
+        <p>Controlled exploitation of the weakest viable entry point — technical or human — with every action logged and authorised in advance.</p>
+      </div>
+      <div class="step">
+        <span class="k">Phase 03</span>
+        <h3>Escalation &amp; Movement</h3>
+        <p>From a foothold to the assets that matter: privilege escalation, lateral movement, and the quiet paths your monitoring never flagged.</p>
+      </div>
+      <div class="step">
+        <span class="k">Phase 04</span>
+        <h3>Objective Capture</h3>
+        <p>We demonstrate real impact against agreed objectives — data access, financial systems, domain control — without ever causing harm.</p>
+      </div>
+      <div class="step">
+        <span class="k">Phase 05</span>
+        <h3>Report &amp; Debrief</h3>
+        <p>Two documents, two audiences: an executive narrative of business risk, and a technical annex with reproducible steps and remediation. Then we brief both rooms.</p>
+      </div>
+    </div>
+
+    <div class="method-note reveal">
+      <b>&gt; rules of engagement</b><br>
+      Every engagement runs under signed authorisation, agreed scope and safe-testing constraints. Production stays up. Data stays where it belongs. Evidence is destroyed after acceptance.
+    </div>
+  </div>
+</section>
+
+<!-- ================= STATS ================= -->
+<section>
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat reveal">
+        <div class="n" style="--target:120;"><span class="fallback">120</span>+</div>
+        <div class="lbl">Engagements delivered</div>
+      </div>
+      <div class="stat reveal">
+        <div class="n" style="--target:8;"><span class="fallback">8</span></div>
+        <div class="lbl">Industries served</div>
+      </div>
+      <div class="stat reveal">
+        <div class="n" style="--target:4;"><span class="fallback">4</span></div>
+        <div class="lbl">Markets · Oman GCC UK US</div>
+      </div>
+      <div class="stat reveal">
+        <div class="n" style="--target:0;"><span class="fallback">0</span></div>
+        <div class="lbl">Client findings ever disclosed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 968SEC ================= -->
+<section class="sec968" id="s968">
+  <div class="wrap">
+    <div class="reveal">
+      <p class="eyebrow">Community partner</p>
+      <h2 style="margin-top:1.3rem;">Proud partner of <span class="code">968Sec</span></h2>
+      <p>968Sec is Oman's largest cybersecurity community, built on live demonstrations, direct questions and zero vendor theatre. We back it because the region's security community deserves a stage that runs on substance.</p>
+      <a class="link-arrow" href="https://968sec.com" target="_blank" rel="noopener">Visit 968sec.com</a>
+    </div>
+    <div class="formats">
+      <div class="fmt reveal">
+        <span class="k">Format 01</span>
+        <h3>Community Focus</h3>
+        <p>Students requiring support on research, graduates looking for placements, or questions on trends.</p>
+      </div>
+      <div class="fmt reveal">
+        <span class="k">Format 02</span>
+        <h3>Technical Focus</h3>
+        <p>Technical sessions, workshops, trainings.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REACH ================= -->
+<section id="reach">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">Reach</p>
+      <h2>Anchored in Muscat. <span class="serif-i">Working in four markets.</span></h2>
+    </div>
+    <div class="reach-grid">
+      <div class="port hq reveal">
+        <div>
+          <p class="coords">23.5880° N · 58.3829° E</p>
+          <h3>Oman</h3>
+          <p class="tag">Muscat — Headquarters</p>
+        </div>
+        <p>Local presence, local clearance pathways, and delivery aligned with national regulatory frameworks.</p>
+      </div>
+      <div class="port reveal">
+        <div>
+          <p class="coords">GULF COOPERATION COUNCIL</p>
+          <h3>GCC</h3>
+          <p class="tag">Regional delivery</p>
+        </div>
+        <p>Engagements across the Gulf, with fluency in the region's regulators, sectors and sensitivities.</p>
+      </div>
+      <div class="port reveal">
+        <div>
+          <p class="coords">51.5072° N · 0.1276° W</p>
+          <h3>United Kingdom</h3>
+          <p class="tag">International delivery</p>
+        </div>
+        <p>Testing and advisory for UK enterprises, aligned with recognised British standards and frameworks.</p>
+      </div>
+      <div class="port reveal">
+        <div>
+          <p class="coords">UNITED STATES</p>
+          <h3>America</h3>
+          <p class="tag">International delivery</p>
+        </div>
+        <p>Remote engagements for US clients, from scoping through to executive debrief.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="cta" id="contact">
+  <div class="wrap reveal">
+    <p class="eyebrow" style="justify-content:center;">Start a conversation</p>
+    <h2 style="margin-top:1.6rem;">The best time to be tested is <span class="serif-i">before it matters.</span></h2>
+    <p>Tell us what you're protecting. We'll come back with a scoped, senior-led proposal.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-solid" href="mailto:hello@evans-it.net">Request an engagement</a>
+    </div>
+    <span class="mono-mail">or write to <a href="mailto:hello@evans-it.net.com">hello@evans-it.net</a></span>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>© 2026 Connor James LLC · Muscat, Sultanate of Oman</p>
+    <ul class="foot-links">
+      <li><a href="#capabilities">Capabilities</a></li>
+      <li><a href="https://968sec.com" target="_blank" rel="noopener">968Sec</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </div>
+</footer>
+
+</body>
+</html>
